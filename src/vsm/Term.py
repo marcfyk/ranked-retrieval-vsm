@@ -8,14 +8,14 @@ class Term:
     """
     term -> string.
     docFreq -> number of documents that the term is observed.
+    postingsListFilePointer -> file position of postings list file.
     lineNumber -> line number of postings list of this term in file.
     pointer -> pointer of postings list of this term in file.
     """
-    def __init__(self, term, docFreq, lineNumber=-1, pointer=-1):
+    def __init__(self, term, docFreq, postingsListFilePos):
         self.term = term
         self.docFreq = docFreq
-        self.lineNumber = lineNumber
-        self.pointer = pointer
+        self.postingsListFilePos = postingsListFilePos
 
     """
     postingsListFileHandler -> file handler object to get postings list.
@@ -24,15 +24,15 @@ class Term:
     else return by pointer if possible, else by line number.
     """
     def getPostingsList(self, postingsListFileHandler):
-        pointer = self.pointer
-        lineNumber = self.lineNumber
+        pointer = self.postingsListFilePos.pointer
+        lineNumber = self.postingsListFilePos.lineNumber
         hasValidLineNumber = lineNumber > -1
         hasValidPointer = pointer > -1
         if not hasValidLineNumber and not hasValidPointer:
             return
         if hasValidPointer:
             return self.getPostingsListByPointer(postingsListFileHandler)
-        return getPostingsListByLineNumber(postingsListFileHandler)
+        return self.getPostingsListByLineNumber(postingsListFileHandler)
 
     """
     postingsListFileHandler -> file handler object to get postings list.
@@ -40,7 +40,7 @@ class Term:
     gets postings list via line number.
     """
     def getPostingsListByLineNumber(self, postingsListFileHandler):
-        lineNumber = self.lineNumber
+        lineNumber = self.postingsListFilePos.lineNumber
         return postingsListFileHandler.getPostingsListByLineNumber(lineNumber)
 
     """
@@ -49,11 +49,11 @@ class Term:
     gets postings list via pointer.
     """
     def getPostingsListByPointer(self, postingsListFileHandler):
-        pointer = self.pointer
+        pointer = self.postingsListFilePos.pointer
         return postingsListFileHandler.getPostingsListByPointer(pointer)
 
     def __repr__(self):
-        return f"term: {self.term}, document frequency: {self.docFreq}, line number: {self.lineNumber}, pointer: {self.pointer}"
+        return f"<term: {self.term}, doc freq: {self.docFreq}, postings list pos: {self.postingsListFilePos}>"
 
     def __hash__(self):
         return hash(self.term)

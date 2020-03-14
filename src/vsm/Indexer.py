@@ -2,8 +2,10 @@ from functools import reduce
 from os import path
 
 from .DictionaryFileHandler import DictionaryFileHandler
+from .DocumentMapFileHandler import DocumentMapFileHandler
 from .Posting import Posting
 from .PostingsListFileHandler import PostingsListFileHandler
+from .FilePosition import FilePosition
 from .Term import Term
 
 from nltk.stem import PorterStemmer
@@ -18,21 +20,25 @@ class Indexer:
     """
     dictionaryFilePath -> file path to read and write dictionary, will be wrapped in DictionaryFileHandler object.
     postingsFilePath -> file to read and write postings lists, will be wrapped in PostingsListFileHandler object.
-    step -> the step at which to read documents into memory before writing to file, default = 1
-    stemmer -> stemmer to stem terms, default = PorterStemmer (nltk)
-    totalDocuments -> list of documents to be indexed
+    step -> the step at which to read documents into memory before writing to file, default = 1.
+    stemmer -> stemmer to stem terms, default = PorterStemmer (nltk).
+    documentMap -> map of documents to be indexed, mapping document ids to document objects.
     """
-    def __init__(self, dictionaryFilePath, postingsFilePath, totalDocumentsFilePath, step=1, stemmer=None, totalDocuments=[]):
+    def __init__(self, config, step=1, stemmer=None, documentMap={}):
 
-        dictionaryDir, dictionaryFile = path.split(dictionaryFilePath)
-        postingsDir, postingsFile = path.split(postingsFilePath)
-        totalDocumentsDir, totalDocumentsFile = path.split(totalDocumentsFilePath)
+        dictionaryDir, dictionaryFile = path.split(config.dictionaryFilePath)
+        postingsDir, postingsFile = path.split(config.postingsFilePath)
+        documentMapDir, documentMapFile = path.split(config.documentMapFilePath)
 
         self.dictionaryFileHandler = DictionaryFileHandler(dictionaryFile, directory=dictionaryDir)
         self.postingsListFileHandler = PostingsListFileHandler(postingsFile, directory=postingsDir)
+        self.documentMapFileHandler = DocumentMapFileHandler(documentMapFile, directory=documentMapDir)
+
         self.step = step
         self.stemmer = PorterStemmer() if stemmer is None else stemmer
-        self.totalDocuments = [d for d in totalDocuments]
+        self.documentMap = {}
+        for docId, doc in documentMap.items():
+            self.documentMap[docId] = doc
         self.dictionary = {} # key -> term (string), value -> Term object
 
     """
@@ -45,31 +51,33 @@ class Indexer:
         step = self.step
         dictionaryFileHandler = self.dictionaryFileHandler
         postingsListFileHandler = self.postingsListFileHandler
-        totalDocuments = self.totalDocuments
+        documentMapFileHandler = self.documentMapFileHandler
+        documentMap = self.documentMap
         dictionary = self.dictionary
 
-        sortedDocuments = sorted(totalDocuments)
+        sortedDocuments = sorted(documentMap.values())
 
         batches = [sortedDocuments[i:i+step] for i in range(0, len(sortedDocuments), step)]
-        progressRep = lambda x : print(f"indexed {x} / {len(sortedDocuments)}", end="\r")
         indexedDocCount = 0
         for docBatch in batches: # write postings list and update dictionary batch by batch
             terms = self.getTermsFromDocumentBatch(docBatch, dictionary)
             postingsListFileHandler.writePostingsListsToMultipleLines(terms)
-            progressRep(indexedDocCount)
             indexedDocCount += len(docBatch)
+            print(f"indexed {indexedDocCount} / {len(sortedDocuments)}", end="\r")
 
         termObjects = dictionary.values()
         pointers = postingsListFileHandler.fetchAllPointersToStartOfEachLine()
         assert len(pointers) == len(termObjects), (f"pointers count = {len(pointers)}, term count = {len(termObjects)}, pointers count should equal term count")
-        assert reduce(lambda x, y : (y, x[0] < y and x[1]), [term.lineNumber for term in termObjects], (-1, True))[1] == True, ("checks if line numbers are sorted")
+        assert reduce(lambda x, y : (y, x[0] < y and x[1]), [term.postingsListFilePos.lineNumber for term in termObjects], (-1, True))[1] == True, ("checks if line numbers are sorted")
         
         for term, pointer in zip(termObjects, pointers): # updates pointers to all postings lists for efficient disk seeks
-            term.pointer = pointer
+            term.postingsListFilePos.pointer = pointer
 
-        dictionaryFileHandler.writeDictionary(dictionary) # writes dictionary to file
+        dictionaryFileHandler.write(dictionary) # writes dictionary to file
+        documentMapFileHandler.write(documentMap) # writes documents to file
 
-        assert dictionaryFileHandler.readDictionary() == dictionary, ("dictionary integrity should be maintained")
+        assert dictionaryFileHandler.read() == dictionary, ("dictionary integrity should be maintained")
+        assert documentMapFileHandler.read() == documentMap, ("document map integrity should be maintained")
 
 
     """
@@ -97,7 +105,8 @@ class Indexer:
         # updates dictionary based on terms from document
         for t in termsToBeAdded:
             if t not in dictionary:
-                dictionary[t] = Term(t, 0, len(dictionary))
+                postingsListFilePos = FilePosition(lineNumber=len(dictionary))
+                dictionary[t] = Term(t, 0, postingsListFilePos)
             term = dictionary[t]
             term.docFreq += 1 # update doc frequency of term in dictionary
 

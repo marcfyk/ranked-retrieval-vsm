@@ -19,7 +19,7 @@ class DictionaryFileHandler:
     """
     reads dictionary from file. (via pickle)
     """
-    def readDictionary(self):
+    def read(self):
         dictionaryFilePath = self.dictionaryFilePath
 
         try:
@@ -27,12 +27,12 @@ class DictionaryFileHandler:
                 dictionary = load(f)
             return dictionary
         except EOFError:
-            return None
+            return {}
 
     """
     writes dictionary to file. (via pickle)
     """
-    def writeDictionary(self, dictionary):
+    def write(self, dictionary):
         dictionaryFilePath = self.dictionaryFilePath
         with open(dictionaryFilePath, "wb") as f:
             dump(dictionary, f)

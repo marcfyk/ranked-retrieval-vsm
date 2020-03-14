@@ -18,7 +18,7 @@ class PostingsList:
     @classmethod
     def parse(self, line):
         delimiter = PostingsList.delimiter
-        postings = line.split(delimiter)
+        postings = line.strip().split(delimiter)
         return PostingsList([Posting.parse(posting) for posting in postings])
 
     """

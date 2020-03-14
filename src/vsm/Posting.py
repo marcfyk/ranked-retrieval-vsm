@@ -18,7 +18,7 @@ class Posting:
     def parse(cls, postingLine):
         pattern = cls.pattern
         if not pattern.match(postingLine):
-            return
+            raise ValueError(f"invalid format: \"{postingLine}\"")
         docId, termFreq = [int(x) for x in postingLine[1:-1].split(",")]
         return Posting(docId, termFreq)
 

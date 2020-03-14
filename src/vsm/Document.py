@@ -35,27 +35,35 @@ class Document:
     returns a sorted list of Document objects.
     """
     @classmethod
-    def parseDirectory(cls, directory):
-        return sorted([cls.parseFile(fileName, directory) for fileName in os.listdir(directory)])
-    
+    def parseDirectory(cls, directory, limit=-1):
+        documentMap = {}
+        documents = sorted([cls.parseFile(fileName, directory) for fileName in os.listdir(directory)])
+        if limit > 0:
+            documents = documents[:limit]
+        for docId, document in [(d.docId, d) for d in documents]:
+            documentMap[docId] = document
+        return documentMap
+
     def __repr__(self):
         return f"ID: {self.docId}, file path: \"{self.filePath}\""
+
+    def __hash__(self):
+        return hash(self.docId)
 
     def __lt__(self, o):
         return type(o) == Document and self.docId < o.docId
 
     def __le__(self, o):
-        return stype(o) == Document and self.docId <= o.docId
+        return type(o) == Document and self.docId <= o.docId
 
     def __gt__(self, o):
-        return stype(o) == Document and self.docId > o.docId
+        return type(o) == Document and self.docId > o.docId
 
     def __ge__(self, o):
-        return stype(o) == Document and self.docId >= o.docId
+        return type(o) == Document and self.docId >= o.docId
 
     def __eq__(self, o):
-        return stype(o) == Document and self.docId == o.docId
+        return type(o) == Document and self.docId == o.docId
 
     def __ne__(self, o):
-        return stype(o) == Document and self.docId != o.docId
-
+        return type(o) == Document and self.docId != o.docId

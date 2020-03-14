@@ -49,7 +49,7 @@ class PostingsListFileHandler:
         directory = self.directory
         postingsFilePath = self.postingsFilePath
 
-        data = [(term.lineNumber, listOfPostings) for term, listOfPostings in termsAndPostings.items()] # map (Term, [postings]) -> (line number, [postings])
+        data = [(term.postingsListFilePos.lineNumber, listOfPostings) for term, listOfPostings in termsAndPostings.items()] # map (Term, [postings]) -> (line number, [postings])
         sortedDataQueue = deque(sorted(data, key=lambda k : k[0])) # sorts data into a queue according to line number
 
         tempPostingsFilePath = path.join(directory, "temp-postings-file.txt")
@@ -84,12 +84,12 @@ class PostingsListFileHandler:
     """
     def fetchAllPointersToStartOfEachLine(self):
         postingsFilePath = self.postingsFilePath
-        pointers = []
+        pointers = [0]
         with open(postingsFilePath, "r") as f:
-            line = f.readline()
-            while line:
+            while f.readline():
                 pointers.append(f.tell())
-                line = f.readline()
+        if len(pointers) > 1: # discard pointer at the end of file.
+            pointers.pop()
         return pointers
 
     def __repr__(self):

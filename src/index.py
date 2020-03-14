@@ -1,27 +1,45 @@
 from os import path
 
-from vsm import Indexer
+from vsm import Config
+from vsm import ConfigFileHandler
 from vsm import Document
+from vsm import Indexer
 
 import os
 
-dictionaryFile = "dictionary.txt"
-postingsFile = "postings.txt"
+configDir = "config"
+configFile = "config.txt"
+configFilePath = path.join(configDir, configFile)
+
+dataDir = "data"
+dictionaryFilePath = path.join(dataDir, "dictionary.txt")
+postingsFilePath = path.join(dataDir, "postings.txt")
+documentMapFilePath = path.join(dataDir, "documentMap.txt")
+
 trainingDataDir = "training"
-outputDataDir = "data"
 
-dictionaryFilePath = path.join(outputDataDir, dictionaryFile)
-postingsFilePath = path.join(outputDataDir, postingsFile)
+if not path.exists(dataDir):
+    os.mkdir(dataDir)
 
-if not path.exists(outputDataDir):
-    path.mkdir(outputDataDir)
+if not path.exists(configDir):
+    os.mkdir(configDir)
 
 open(dictionaryFilePath, "w").close()
 open(postingsFilePath, "w").close()
+open(documentMapFilePath, "w").close()
 
+config = Config(
+        dictionaryFilePath=dictionaryFilePath, 
+        postingsFilePath=postingsFilePath, 
+        documentMapFilePath=documentMapFilePath)
 
-docs = Document.parseDirectory(trainingDataDir)[:100]
+documentMap = Document.parseDirectory(trainingDataDir, limit=20)
 
-indexer = Indexer(dictionaryFilePath, postingsFilePath, step=1, totalDocuments=docs)
+indexer = Indexer(config, step=1, documentMap=documentMap)
 indexer.index()
+
+configFileHandler = ConfigFileHandler(configFile, directory=configDir)
+configFileHandler.write(config)
+
+assert configFileHandler.read() == config, (f"config's integrity should be maintained, {config.dictionaryFilePath}, {config.postingsFilePath}, {config.documentMapFilePath}")
 

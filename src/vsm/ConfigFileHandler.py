@@ -6,6 +6,9 @@ from .Config import Config
 
 class ConfigFileHandler:
 
+    """
+    file handler for config objects
+    """
     def __init__(self, configFile, directory=""):
         self.configFile = configFile
         self.directory = directory

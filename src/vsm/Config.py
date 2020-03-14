@@ -2,7 +2,9 @@
 
 class Config:
 
-
+    """
+    wraps file paths into config object.
+    """
     def __init__(self, dictionaryFilePath="", postingsFilePath="", documentMapFilePath=""):
         self.dictionaryFilePath = dictionaryFilePath
         self.postingsFilePath = postingsFilePath

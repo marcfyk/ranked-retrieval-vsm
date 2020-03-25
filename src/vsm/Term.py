@@ -1,29 +1,27 @@
-from .PostingsListFileHandler import PostingsListFileHandler 
+from .postingslistfilehandler import PostingsListFileHandler 
 
-"""
-contains the term, document frequency, the line number and pointer to the a given file that it is stored in.
-"""
 class Term:
+    """
+    contains the term, document frequency, the line number and pointer to the a given file that it is stored in.
+    """
     
-    """
-    term -> string.
-    docFreq -> number of documents that the term is observed.
-    postingsListFilePointer -> file position of postings list file.
-    lineNumber -> line number of postings list of this term in file.
-    pointer -> pointer of postings list of this term in file.
-    """
     def __init__(self, term, docFreq, postingsListFilePos):
+        """
+        term -> string.
+        docFreq -> number of documents that the term is observed.
+        postingsListFilePos -> file position of postings list file.
+        """
         self.term = term
         self.docFreq = docFreq
         self.postingsListFilePos = postingsListFilePos
 
-    """
-    postingsListFileHandler -> file handler object to get postings list.
-
-    if line number and pointer are both invalid, return None.
-    else return by pointer if possible, else by line number.
-    """
     def getPostingsList(self, postingsListFileHandler):
+        """
+        postingsListFileHandler -> file handler object to get postings list.
+
+        if line number and pointer are both invalid, return None.
+        else return by pointer if possible, else by line number.
+        """
         pointer = self.postingsListFilePos.pointer
         lineNumber = self.postingsListFilePos.lineNumber
         hasValidLineNumber = lineNumber > -1
@@ -34,21 +32,21 @@ class Term:
             return self.getPostingsListByPointer(postingsListFileHandler)
         return self.getPostingsListByLineNumber(postingsListFileHandler)
 
-    """
-    postingsListFileHandler -> file handler object to get postings list.
-
-    gets postings list via line number.
-    """
     def getPostingsListByLineNumber(self, postingsListFileHandler):
+        """
+        postingsListFileHandler -> file handler object to get postings list.
+
+        gets postings list via line number.
+        """
         lineNumber = self.postingsListFilePos.lineNumber
         return postingsListFileHandler.getPostingsListByLineNumber(lineNumber)
 
-    """
-    postingsListFileHandler -> file handler object to get postings list.
-
-    gets postings list via pointer.
-    """
     def getPostingsListByPointer(self, postingsListFileHandler):
+        """
+        postingsListFileHandler -> file handler object to get postings list.
+
+        gets postings list via pointer.
+        """
         pointer = self.postingsListFilePos.pointer
         return postingsListFileHandler.getPostingsListByPointer(pointer)
 

@@ -1,25 +1,30 @@
 import re
 
-"""
-contains docID and term frequency.
-"""
 class Posting:
+    """
+    contains docID and term frequency.
+    """
+
+    # regex pattern for parsing strings to postings.
     pattern = re.compile("^[<][0-9]*[,][0-9]*[>]$")
     
-    """
-    docId -> docId of document.
-    termFreq -> frequency of a term in this docId.
-    """
     def __init__(self, docId, termFreq):
+        """
+        docId -> docId of document.
+        termFreq -> frequency of a term in this docId.
+        """
         self.docId = docId
         self.termFreq = termFreq
 
     @classmethod
-    def parse(cls, postingLine):
+    def parse(cls, postingString):
+        """
+        parses a posting string into a Posting.
+        """
         pattern = cls.pattern
-        if not pattern.match(postingLine):
-            raise ValueError(f"invalid format: \"{postingLine}\"")
-        docId, termFreq = [int(x) for x in postingLine[1:-1].split(",")]
+        if not pattern.match(postingString):
+            raise ValueError(f"invalid format: \"{postingString}\"")
+        docId, termFreq = [int(x) for x in postingString[1:-1].split(",")]
         return Posting(docId, termFreq)
 
     def __repr__(self):

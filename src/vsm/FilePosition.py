@@ -1,5 +1,8 @@
 
 class FilePosition:
+    """
+    represents position in a file, storing a line number (zero based) and pointer.
+    """
 
     def __init__(self, lineNumber=-1, pointer=-1):
         self.lineNumber = lineNumber

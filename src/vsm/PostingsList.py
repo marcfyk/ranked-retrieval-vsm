@@ -1,36 +1,36 @@
-from .Posting import Posting
+from .posting import Posting
 
-"""
-list of postings, which contains docID and term frequency each.
-"""
 class PostingsList:
+    """
+    list of postings, which contains docID and term frequency each.
+    """
     delimiter = " "
 
-    """
-    postings -> list of Posting objects, default = []
-    """
     def __init__(self, postings=[]):
+        """
+        postings -> list of Posting objects, default = []
+        """
         self.postings = [x for x in postings]
 
-    """
-    parses a given line into a PostingsList object.
-    """
     @classmethod
     def parse(self, line):
+        """
+        parses a given line into a PostingsList object.
+        """
         delimiter = PostingsList.delimiter
         postings = line.strip().split(delimiter)
         return PostingsList([Posting.parse(posting) for posting in postings])
 
-    """
-    add one posting to list of postings
-    """
     def add(self, posting):
+        """
+        add one posting to list of postings
+        """
         self.postings.append(posting)
 
-    """
-    add multiple postings to list of postings.
-    """
     def addAll(self, postings):
+        """
+        add multiple postings to list of postings.
+        """
         self.postings.extend(postings)
 
     def __repr__(self):
@@ -38,3 +38,8 @@ class PostingsList:
         postings = self.postings
         return  delimiter.join([str(posting) for posting in postings])
 
+    def __iter__(self):
+        postings = self.postings
+        N = len(postings)
+        for i in range(N):
+            yield postings[i]

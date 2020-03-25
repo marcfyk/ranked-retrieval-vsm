@@ -1,28 +1,28 @@
 from collections import deque
 from os import path
 
-from .PostingsList import PostingsList
+from .postingslist import PostingsList
 
 import os
 
-"""
-file handler to handle io operations for postings lists
-"""
 class PostingsListFileHandler:
+    """
+    file handler to handle io operations for postings lists
+    """
 
-    """
-    postingsFile -> file for postings lists to be read and written from.
-    directory -> directory where postings file is in.
-    """
     def __init__(self, postingsFile, directory=""):
+        """
+        postingsFile -> file for postings lists to be read and written from.
+        directory -> directory where postings file is in.
+        """
         self.postingsFile = postingsFile
         self.directory = directory
         self.postingsFilePath = path.join(directory, postingsFile)
 
-    """
-    reads postings list from a line number (zero-based)
-    """
     def getPostingsListByLineNumber(self, lineNumber):
+        """
+        reads postings list from a line number (zero-based)
+        """
         # line number is zero based
         postingsFilePath = self.postingsFilePath
         with open(postingsFilePath, "r") as f:
@@ -30,27 +30,28 @@ class PostingsListFileHandler:
                 line = f.readline()
         return PostingsList.parse(line)
 
-    """
-    reads postings list from a pointer (f.seek())
-    """
     def getPostingsListByPointer(self, pointer):
+        """
+        reads postings list from a pointer (f.seek())
+        """
         postingsFilePath = self.postingsFilePath
         with open(postingsFilePath, "r") as f:
             f.seek(pointer)
             line = f.readline()
         return PostingsList.parse(line)
     
-    """
-    termsAndPostings -> list of (Term object, list of Posting objects to be added)
-    updates and/or adds postings list to file.
-    """
     def writePostingsListsToMultipleLines(self, termsAndPostings):
-        # termsAndPostings -> list of items where item = (Term obj, list of Posting objs)
+        """
+        termsAndPostings -> list of (Term object, list of Posting objects to be added)
+        updates and/or adds postings list to file.
+        """
         directory = self.directory
         postingsFilePath = self.postingsFilePath
 
-        data = [(term.postingsListFilePos.lineNumber, listOfPostings) for term, listOfPostings in termsAndPostings.items()] # map (Term, [postings]) -> (line number, [postings])
-        sortedDataQueue = deque(sorted(data, key=lambda k : k[0])) # sorts data into a queue according to line number
+        # map (Term, [postings]) -> (line number, [postings])
+        data = [(term.postingsListFilePos.lineNumber, listOfPostings) for term, listOfPostings in termsAndPostings.items()]
+        # sorts data into a queue according to line number
+        sortedDataQueue = deque(sorted(data, key=lambda k : k[0]))
 
         tempPostingsFilePath = path.join(directory, "temp-postings-file.txt")
 
@@ -79,10 +80,10 @@ class PostingsListFileHandler:
 
         os.replace(tempPostingsFilePath, postingsFilePath) # writes t to f
 
-    """
-    gets the pointer value for each start of a line in the file.
-    """
     def fetchAllPointersToStartOfEachLine(self):
+        """
+        gets the pointer value for each start of a line in the file.
+        """
         postingsFilePath = self.postingsFilePath
         pointers = [0]
         with open(postingsFilePath, "r") as f:

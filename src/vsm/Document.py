@@ -2,40 +2,43 @@ from os import path
 
 import os
 
-"""
-document object containing docId and the path to the file.
-"""
 class Document:
+    """
+    document object containing docId and the path to the file.
+    """
 
-    """
-    docId -> numeric id for document. (sorted based on docId)
-    fileName -> file name.
-    directory -> directory of file.
-    """
-    def __init__(self, docId, fileName, directory=""):
+    def __init__(self, docId, fileName, directory="", distance=0):
+        """
+        docId -> numeric id for document. (sorted based on docId)
+        fileName -> file name.
+        directory -> directory of file.
+        distance -> euclidean distance of document vector wrt vector space model.
+        """
         self.docId = docId
         self.fileName = fileName
         self.directory = directory
         self.filePath = path.join(directory, fileName)
+        self.distance = distance
 
-    """
-    fileName -> name of file.
-    directory -> directory of file.
-
-    returns a Document object representing this file.
-    """
     @classmethod
     def parseFile(cls, fileName, directory=""):
+        """
+        fileName -> name of file.
+        directory -> directory of file.
+
+        returns a Document object representing this file.
+        """
+
         assert fileName.isnumeric(), ("document: \"{fileName}\" should be numeric")
         return Document(int(fileName), fileName, directory)
 
-    """
-    directory -> directory of files to be parsed into Document objects.
-
-    returns a sorted list of Document objects.
-    """
     @classmethod
     def parseDirectory(cls, directory, limit=-1):
+        """
+        directory -> directory of files to be parsed into Document objects.
+        returns a sorted list of Document objects.
+        """
+
         documentMap = {}
         documents = sorted([cls.parseFile(fileName, directory) for fileName in os.listdir(directory)])
         if limit > 0:
@@ -44,8 +47,17 @@ class Document:
             documentMap[docId] = document
         return documentMap
 
+    def read(self):
+        """
+        reads the data from the file.
+        """
+        filePath = self.filePath
+        with open(filePath, "r") as f:
+            data = f.read()
+        return data
+
     def __repr__(self):
-        return f"ID: {self.docId}, file path: \"{self.filePath}\""
+        return f"id: {self.docId}, file path: \"{self.filePath}\", distance: {self.distance}"
 
     def __hash__(self):
         return hash(self.docId)

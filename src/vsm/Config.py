@@ -1,11 +1,13 @@
 
-
 class Config:
+    """
+    Config class wraps file paths for dictionary, postings and document map into objects.
+    """
 
-    """
-    wraps file paths into config object.
-    """
     def __init__(self, dictionaryFilePath="", postingsFilePath="", documentMapFilePath=""):
+        """
+        stores the file paths of dictionary, postings and document map.
+        """
         self.dictionaryFilePath = dictionaryFilePath
         self.postingsFilePath = postingsFilePath
         self.documentMapFilePath = documentMapFilePath

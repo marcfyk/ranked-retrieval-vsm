@@ -2,19 +2,27 @@ from os import path
 from pickle import load
 from pickle import dump
 
-from .Config import Config
+from .config import Config
 
 class ConfigFileHandler:
-
     """
     file handler for config objects
     """
+
     def __init__(self, configFile, directory=""):
+        """
+        configFile -> file name.
+        directory -> directory to store config file.
+        """
         self.configFile = configFile
         self.directory = directory
         self.configFilePath = path.join(directory, configFile)
 
     def read(self):
+        """
+        loads config object from file.
+        """
+
         configFilePath = self.configFilePath
 
         try:
@@ -25,6 +33,9 @@ class ConfigFileHandler:
             return Config()
 
     def write(self, config):
+        """
+        writes config object to file.
+        """
         configFilePath = self.configFilePath
         with open(configFilePath, "wb") as f:
             dump(config, f)

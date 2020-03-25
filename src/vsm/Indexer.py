@@ -1,30 +1,34 @@
 from functools import reduce
+from math import sqrt
+from math import log
 from os import path
 
-from .DictionaryFileHandler import DictionaryFileHandler
-from .DocumentMapFileHandler import DocumentMapFileHandler
-from .Posting import Posting
-from .PostingsListFileHandler import PostingsListFileHandler
-from .FilePosition import FilePosition
-from .Term import Term
+from .dictionaryfilehandler import DictionaryFileHandler
+from .documentmapfilehandler import DocumentMapFileHandler
+from .posting import Posting
+from .postingslistfilehandler import PostingsListFileHandler
+from .fileposition import FilePosition
+from .term import Term
 
 from nltk.stem import PorterStemmer
 from nltk import sent_tokenize
 from nltk import word_tokenize
 
-"""
-indexer objects can index documents to a dictionary and write to dictionary and write the dictionary and postings lists to disk.
-"""
 class Indexer:
+    """
+    indexer objects can index documents to a dictionary and write to dictionary and write the dictionary and postings lists to disk.
+    """
 
-    """
-    dictionaryFilePath -> file path to read and write dictionary, will be wrapped in DictionaryFileHandler object.
-    postingsFilePath -> file to read and write postings lists, will be wrapped in PostingsListFileHandler object.
-    step -> the step at which to read documents into memory before writing to file, default = 1.
-    stemmer -> stemmer to stem terms, default = PorterStemmer (nltk).
-    documentMap -> map of documents to be indexed, mapping document ids to document objects.
-    """
+
     def __init__(self, config, step=1, stemmer=None, documentMap={}):
+        """
+        dictionaryFilePath -> file path to read and write dictionary, will be wrapped in DictionaryFileHandler object.
+        postingsFilePath -> file to read and write postings lists, will be wrapped in PostingsListFileHandler object.
+        step -> the step at which to read documents into memory before writing to file, default = 1.
+        stemmer -> stemmer to stem terms, default = PorterStemmer (nltk).
+        documentMap -> map of documents to be indexed, mapping document ids to document objects.
+        dictionary -> map of terms in the dictionary, mapping term strings 
+        """
 
         dictionaryDir, dictionaryFile = path.split(config.dictionaryFilePath)
         postingsDir, postingsFile = path.split(config.postingsFilePath)
@@ -41,12 +45,12 @@ class Indexer:
             self.documentMap[docId] = doc
         self.dictionary = {} # key -> term (string), value -> Term object
 
-    """
-    sorts documents by docId.
-    indexes all documents by appropriate batches, updating dictionary and postings file.
-    writes dictionary to file.
-    """
     def index(self):
+        """
+        sorts documents by docId.
+        indexes all documents by appropriate batches, updating dictionary and postings file.
+        writes dictionary to file.
+        """
 
         step = self.step
         dictionaryFileHandler = self.dictionaryFileHandler
@@ -79,28 +83,29 @@ class Indexer:
         assert dictionaryFileHandler.read() == dictionary, ("dictionary integrity should be maintained")
         assert documentMapFileHandler.read() == documentMap, ("document map integrity should be maintained")
 
-
-    """
-    gets the terms from document after stemming.
-    updates dictionary.
-    returns a dictionary of Term object -> term frequency 
-    """
     def getTermsFromDocument(self, document, dictionary):
+        """
+        gets the terms from document after stemming.
+        updates dictionary.
+        returns a dictionary of Term object -> term frequency 
+        """
+
         stemmer = self.stemmer
-        docId = document.docId
-        filePath = document.filePath
 
         termsToBeAdded = {} # key -> term (string), value -> term frequency
 
+        isValidTerm = lambda t : reduce(lambda x, y : x or y.isalnum(), t, False)
+
         # reads file, stems words, adds them to termsToBeAdded
-        with open(document.filePath, "r") as f:
-            data = f.read()
-            for sentence in sent_tokenize(data):
-                for word in word_tokenize(sentence):
-                    term = stemmer.stem(word)
-                    if term not in termsToBeAdded:
-                        termsToBeAdded[term] = 0
-                    termsToBeAdded[term] += 1 # update term frequency in this doc
+        data = document.read()
+        for sentence in sent_tokenize(data):
+            for word in word_tokenize(sentence):
+                term = stemmer.stem(word.strip().casefold())
+                if not isValidTerm(term):
+                    continue
+                if term not in termsToBeAdded:
+                    termsToBeAdded[term] = 0
+                termsToBeAdded[term] += 1 # update term frequency in this doc
 
         # updates dictionary based on terms from document
         for t in termsToBeAdded:
@@ -114,14 +119,18 @@ class Indexer:
         for term, termFreq in termsToBeAdded.items():
             outputTerms[dictionary[term]] = termFreq
 
+        # euclidean distance calculation
+        tf = lambda f : 1 + log(f, 10)
+        document.distance = sqrt(sum([tf(f) ** 2 for f in termsToBeAdded.values()]))
+
         return outputTerms
 
-    """
-    get the terms from all documents in batch.
-    returns a dictionary of Term object -> list of Posting objects (to be added)
-    """
     def getTermsFromDocumentBatch(self, documentBatch, dictionary):
-        
+        """
+        get the terms from all documents in batch.
+        returns a dictionary of Term object -> list of Posting objects (to be added)
+        """
+     
         totalOutputTerms = {} # key -> Term (obj), value -> list of Posting objects
         for doc in documentBatch:
             docId = doc.docId
@@ -133,6 +142,3 @@ class Indexer:
                 totalOutputTerms[term].append(Posting(docId, termFreq))
 
         return totalOutputTerms
-
-
-

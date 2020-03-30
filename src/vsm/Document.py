@@ -56,6 +56,9 @@ class Document:
             data = f.read()
         return data
 
+    def __str__(self):
+        return f"{self.docId}"
+
     def __repr__(self):
         return f"id: {self.docId}, file path: \"{self.filePath}\", distance: {self.distance}"
 
